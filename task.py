@@ -1,8 +1,9 @@
 from crewai import Task
-from agents import financial_analyst, verifier, investment_advisor, risk_assessor
-from tools import FinancialDocumentTool
+from agents import financial_analyst, document_processor
+from tools import FinancialDocumentAnalyzer
 
-## Task: Analyze financial document for insights
+
+# Task to analyze financial document for insights using the financial analyst agent
 analyze_financial_document = Task(
     description=(
         "Analyze the user's query regarding a financial document. "
@@ -14,47 +15,21 @@ analyze_financial_document = Task(
         "based on data from the financial document."
     ),
     agent=financial_analyst,
-    tools=[FinancialDocumentTool.read_data_tool],
+    tools=[FinancialDocumentAnalyzer()],
     async_execution=False,
 )
 
-## Task: Verify the authenticity and relevance of the financial document
-verification = Task(
-    description=(
-        "Verify if the uploaded document is a valid financial report. "
-        "Check for compliance and key financial indicators."
-    ),
-    expected_output=(
-        "Confirm document validity or highlight discrepancies."
-    ),
-    agent=verifier,
-    tools=[FinancialDocumentTool.read_data_tool],
-    async_execution=False,
-)
 
-## Task: Provide investment product recommendations based on analysis
-investment_analysis = Task(
+# Task to process financial documents for structured data extraction
+process_financial_document = Task(
     description=(
-        "Analyze financial data and user queries to recommend "
-        "investment products and strategies."
+        "Process and extract structured data from financial documents. "
+        "Ensure data cleanliness and organization for further analysis."
     ),
     expected_output=(
-        "List suitable investment options supported by financial data."
+        "Extract structured financial data suitable for analysis."
     ),
-    agent=investment_advisor,
-    tools=[FinancialDocumentTool.read_data_tool],
-    async_execution=False,
-)
-
-## Task: Perform risk assessment for investments and market conditions
-risk_assessment = Task(
-    description=(
-        "Evaluate risk factors and potential volatility based on financial data."
-    ),
-    expected_output=(
-        "Provide detailed risk analysis and mitigation recommendations."
-    ),
-    agent=risk_assessor,
-    tools=[FinancialDocumentTool.read_data_tool],
+    agent=document_processor,
+    tools=[FinancialDocumentAnalyzer()],
     async_execution=False,
 )

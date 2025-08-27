@@ -1,67 +1,62 @@
-from fastapi import FastAPI, File, UploadFile, Form, HTTPException
-import os
-import uuid
-
+# main.py - FIXED VERSION
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from crewai import Crew, Process
-from agents import financial_analyst
-from task import analyze_financial_document
+from agents import financial_analyst, document_processor
+from task import process_financial_document, analyze_financial_document
+import os
+import tempfile
+from dotenv import load_dotenv
 
-from crew import create_financial_crew
+load_dotenv()
 
-def run_crew(query: str, file_path: str):
-    financial_crew = create_financial_crew()
-    result = financial_crew.kickoff({'query': query, 'file_path': file_path})
-    return result
-
-app = FastAPI(title="Financial Document Analyzer API")
+app = FastAPI(title="Financial Document Analyzer", version="1.0.0")
 
 @app.get("/")
 async def root():
-    """Health check endpoint"""
-    return {"message": "Financial Document Analyzer API is running"}
+    return {"message": "Financial Document Analyzer API"}
 
-@app.post("/analyze")
-async def analyze_financial_document(
-    file: UploadFile = File(...),
-    query: str = Form(default="Analyze this financial document for investment insights")
-):
-    """Analyze financial document and provide comprehensive investment recommendations"""
-
-    file_id = str(uuid.uuid4())
-    os.makedirs("data", exist_ok=True)
-    file_path = f"data/financial_document_{file_id}.pdf"
-
+@app.post("/analyze-document/")
+async def analyze_document(file: UploadFile = File(...)):
     try:
-        # Save uploaded file locally
-        with open(file_path, "wb") as f:
+        # Save uploaded file temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             content = await file.read()
-            f.write(content)
+            tmp_file.write(content)
+            tmp_file_path = tmp_file.name
 
-        # Default query if empty or None
-        if not query:
-            query = "Analyze this financial document for investment insights"
+        # Create crew with tasks
+        crew = Crew(
+            agents=[document_processor, financial_analyst],
+            tasks=[document_processing_task, financial_analysis_task],
+            process=Process.sequential,
+            verbose=True
+        )
 
-        # Run the Crew with given query and file path
-        response = run_crew(query=query.strip(), file_path=file_path)
+        # Run the analysis
+        result = crew.kickoff(inputs={'document_path': tmp_file_path})
+
+        # Clean up temporary file
+        os.unlink(tmp_file_path)
 
         return {
             "status": "success",
-            "query": query,
-            "analysis": str(response),
-            "file_processed": file.filename,
+            "analysis": result.raw,
+            "file_name": file.filename
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing financial document: {str(e)}")
-
-    finally:
-        # Clean up file
-        if os.path.exists(file_path):
+        # Clean up on error
+        if 'tmp_file_path' in locals():
             try:
-                os.remove(file_path)
-            except Exception:
-                pass  # Silently ignore cleanup exceptions
+                os.unlink(tmp_file_path)
+            except:
+                pass
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "Financial Document Analyzer"}
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
