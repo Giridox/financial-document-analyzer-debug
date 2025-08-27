@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from crewai_tools import tools
-from crewai_tools.tools.pdf_tool import Pdf  # Proper import of PDF loader
+from crewai_tools.tools.pdf_tool import Pdf  # Correct import of PDF loader
 from crewai_tools.tools.serper_dev_tool import SerperDevTool
 
 # Creating search tool instance
@@ -13,19 +13,19 @@ search_tool = SerperDevTool()
 class FinancialDocumentTool:
     @staticmethod
     async def read_data_tool(path='data/sample.pdf'):
-        """Tool to read data from a pdf file from a given path.
+        """Tool to read data from a pdf file from a path
 
         Args:
             path (str, optional): Path of the pdf file. Defaults to 'data/sample.pdf'.
 
         Returns:
-            str: Full financial document text extracted from PDF.
+            str: Full financial document text
         """
         docs = Pdf(file_path=path).load()
         full_report = ""
         for data in docs:
             content = data.page_content
-            # Remove multiple newlines to clean formatting
+            # Clean extra whitespaces and format properly
             while "\n\n" in content:
                 content = content.replace("\n\n", "\n")
             full_report += content + "\n"
@@ -34,33 +34,13 @@ class FinancialDocumentTool:
 class InvestmentTool:
     @staticmethod
     async def analyze_investment_tool(financial_document_data):
-        """
-        A placeholder function that would analyze financial document data
-        and provide investment insights.
-
-        Args:
-            financial_document_data (str): Text from a financial document.
-
-        Returns:
-            str: Analysis results or summary.
-        """
-        # Clean up double spaces for demonstration
-        processed_data = financial_document_data.replace("  ", " ")
-        # TODO: Implement investment analysis logic here
+        # Process and analyze the financial document data (placeholder)
+        processed_data = financial_document_data.replace("  ", " ")  # simple cleanup
+        # TODO: implement real investment analysis logic
         return "Investment analysis functionality to be implemented."
 
 class RiskTool:
     @staticmethod
     async def create_risk_assessment_tool(financial_document_data):
-        """
-        A placeholder function that would perform risk assessment
-        based on the financial document data.
-
-        Args:
-            financial_document_data (str): Text from financial document.
-
-        Returns:
-            str: Risk assessment results.
-        """
-        # TODO: Implement risk assessment logic here
+        # TODO: implement real risk assessment logic
         return "Risk assessment functionality to be implemented."
