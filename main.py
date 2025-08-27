@@ -6,18 +6,14 @@ from crewai import Crew, Process
 from agents import financial_analyst
 from task import analyze_financial_document
 
-app = FastAPI(title="Financial Document Analyzer API")
+from crew import create_financial_crew
 
 def run_crew(query: str, file_path: str):
-    """Run the CrewAI process with query and file_path inputs"""
-    financial_crew = Crew(
-        agents=[financial_analyst],
-        tasks=[analyze_financial_document],
-        process=Process.sequential,
-    )
-    # Pass both query and file_path for task input
+    financial_crew = create_financial_crew()
     result = financial_crew.kickoff({'query': query, 'file_path': file_path})
     return result
+
+app = FastAPI(title="Financial Document Analyzer API")
 
 @app.get("/")
 async def root():
