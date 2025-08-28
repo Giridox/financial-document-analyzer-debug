@@ -1,4 +1,3 @@
-# main.py - FIXED VERSION
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from crewai import Crew, Process
 from agents import financial_analyst, document_processor
@@ -11,9 +10,11 @@ load_dotenv()
 
 app = FastAPI(title="Financial Document Analyzer", version="1.0.0")
 
+
 @app.get("/")
 async def root():
     return {"message": "Financial Document Analyzer API"}
+
 
 @app.post("/analyze-document/")
 async def analyze_document(file: UploadFile = File(...)):
@@ -24,10 +25,10 @@ async def analyze_document(file: UploadFile = File(...)):
             tmp_file.write(content)
             tmp_file_path = tmp_file.name
 
-        # Create crew with tasks
+        # Create crew with tasks using correct task names
         crew = Crew(
             agents=[document_processor, financial_analyst],
-            tasks=[document_processing_task, financial_analysis_task],
+            tasks=[process_financial_document, analyze_financial_document],
             process=Process.sequential,
             verbose=True
         )
@@ -53,9 +54,11 @@ async def analyze_document(file: UploadFile = File(...)):
                 pass
         raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "Financial Document Analyzer"}
+
 
 if __name__ == "__main__":
     import uvicorn
